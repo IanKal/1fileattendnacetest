@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robotics Team Attendance Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f4f4f9;
+        }
+        .container {
+            text-align: center;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        input, textarea {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Robotics Team Attendance Tracker</h1>
+        <div id="main">
+            <button onclick="showSignUp()">Sign Up</button>
+            <button onclick="showLogin()">Login</button>
+            <button onclick="showAdmin()">Admin</button>
+        </div>
+
+        <div id="signUp" style="display: none;">
+            <h2>Sign Up</h2>
+            <input type="text" id="signUpName" placeholder="Name">
+            <input type="password" id="signUpPassword" placeholder="Password">
+            <button onclick="signUp()">Submit</button>
+            <button onclick="goBack()">Back</button>
+        </div>
+
+        <div id="login" style="display: none;">
+            <h2>Login</h2>
+            <input type="text" id="loginName" placeholder="Name">
+            <input type="password" id="loginPassword" placeholder="Password">
+            <button onclick="login()">Submit</button>
+            <button onclick="goBack()">Back</button>
+        </div>
+
+        <div id="admin" style="display: none;">
+            <h2>Admin</h2>
+            <input type="password" id="adminPassword" placeholder="Admin Password">
+            <button onclick="viewAdmin()">Submit</button>
+            <button onclick="goBack()">Back</button>
+
+            <div id="adminView" style="display: none;">
+                <h3>Attendance Records</h3>
+                <table id="attendanceTable">
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Date</th>
+                            <th>Hours</th>
+                            <th>Activity</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="memberPage" style="display: none;">
+            <h2>Welcome, <span id="memberName"></span></h2>
+            <textarea id="activity" placeholder="What are you doing today?"></textarea>
+            <button onclick="clockIn()">Clock In</button>
+            <button onclick="clockOut()">Clock Out</button>
+            <button onclick="goBack()">Log Out</button>
+        </div>
+    </div>
+
+    <script>
+        const members = JSON.parse(localStorage.getItem('members')) || [];
+        const attendance = JSON.parse(localStorage.getItem('attendance')) || [];
+        const adminPassword = "admin123";
+
+        function showSignUp() {
+            toggleView('signUp');
+        }
+
+        function showLogin() {
+            toggleView('login');
+        }
+
+        function showAdmin() {
+            toggleView('admin');
+        }
+
+        function signUp() {
+            const name = document.getElementById('signUpName').value;
+            const password = document.getElementById('signUpPassword').value;
+            if (name && password) {
+                members.push({ name, password });
+                localStorage.setItem('members', JSON.stringify(members));
+                alert('Sign-up successful!');
+                goBack();
+            } else {
+                alert('Please fill out all fields.');
+            }
+        }
+
+        function login() {
+            const name = document.getElementById('loginName').value;
+            const password = document.getElementById('loginPassword').value;
+            const member = members.find(m => m.name === name && m.password === password);
+            if (member) {
+                toggleView('memberPage');
+                document.getElementById('memberName').textContent = name;
+            } else {
+                alert('Invalid credentials.');
+            }
+        }
+
+        function viewAdmin() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === adminPassword) {
+                toggleView('adminView');
+                populateAdminTable();
+            } else {
+                alert('Incorrect admin password.');
+            }
+        }
+
+        function clockIn() {
+            const name = document.getElementById('memberName').textContent;
+            const activity = document.getElementById('activity').value;
+            const startTime = new Date();
+            attendance.push({ name, activity, startTime: startTime.toISOString(), endTime: null });
+            localStorage.setItem('attendance', JSON.stringify(attendance));
+            alert('Clocked in!');
+        }
+
+        function clockOut() {
+            const name = document.getElementById('memberName').textContent;
+            const record = attendance.find(a => a.name === name && !a.endTime);
+            if (record) {
+                record.endTime = new Date().toISOString();
+                localStorage.setItem('attendance', JSON.stringify(attendance));
+                alert('Clocked out!');
+            } else {
+                alert('You are not clocked in.');
+            }
+        }
+
+        function populateAdminTable() {
+            const tbody = document.getElementById('attendanceBody');
+            tbody.innerHTML = '';
+
+            attendance.forEach(record => {
+                const { name, startTime, endTime, activity } = record;
+                const day = new Date(startTime).toLocaleDateString();
+                const hours = endTime ? ((new Date(endTime) - new Date(startTime)) / 3600000).toFixed(2) : 'In Progress';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${name}</td>
+                    <td>${day}</td>
+                    <td>${hours}</td>
+                    <td>${activity}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function toggleView(viewId) {
+            document.querySelectorAll('.container > div').forEach(div => div.style.display = 'none');
+            document.getElementById(viewId).style.display = 'block';
+        }
+
+        function goBack() {
+            toggleView('main');
+        }
+    </script>
+</body>
+</html>
