@@ -194,8 +194,7 @@
         function populateAdminTable() {
             const attendanceData = JSON.parse(localStorage.getItem('attendance')) || [];
             const tbody = document.getElementById('attendanceBody');
-            
-            tbody.innerHTML = '';
+            tbody.innerHTML = ''; // Clear table rows
 
             attendanceData.forEach(record => {
                 const { name, activity, startTime, endTime } = record;
