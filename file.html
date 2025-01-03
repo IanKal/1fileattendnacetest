@@ -192,13 +192,17 @@
         }
 
         function populateAdminTable() {
+            const attendanceData = JSON.parse(localStorage.getItem('attendance')) || [];
             const tbody = document.getElementById('attendanceBody');
+            
             tbody.innerHTML = '';
 
-            attendance.forEach(record => {
-                const { name, startTime, endTime, activity } = record;
+            attendanceData.forEach(record => {
+                const { name, activity, startTime, endTime } = record;
                 const day = new Date(startTime).toLocaleDateString();
-                const hours = endTime ? ((new Date(endTime) - new Date(startTime)) / 3600000).toFixed(2) : 'In Progress';
+                const hours = endTime 
+                    ? ((new Date(endTime) - new Date(startTime)) / 3600000).toFixed(2) 
+                    : 'In Progress';
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
